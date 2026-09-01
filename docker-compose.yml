@@ -1,0 +1,68 @@
+services:
+  searxng:
+    image: ${DOCKER_IMAGE:-searxng/searxng:latest}
+    container_name: searxng-${LOGNAME}
+    init: true
+    restart: unless-stopped
+    read_only: true
+    pull_policy: always
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=8M,mode=1700
+      - /var/tmp:rw,noexec,nosuid,nodev,size=8M,mode=1700
+      - /etc/ssl/certs:rw,exec,nosuid,nodev,size=8M,mode=1700
+      - /run:rw,noexec,nosuid,nodev,size=4k,mode=1700
+    environment:
+      SEARXNG_BASE_URL: "${SEARXNG_BASE_URL}"
+      SEARXNG_SECRET: "${SEARXNG_SECRET_KEY}"
+      SEARXNG_PORT: "8888"
+      SEARXNG_BIND_ADDRESS: "[::]"
+      PYTHONPYCACHEPREFIX: "/tmp/pycache"
+    volumes:
+      - ./config:/etc/searxng:ro
+      - searxng-data:/var/cache/searxng/
+    networks:
+      searxng-ipv6:
+        ipv6_address: "${IPV6_ADDRESS}"
+    cap_drop:
+      - ALL
+      - SYS_ADMIN
+    cap_add:
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    shm_size: 4m
+    memswap_limit: 512m
+    cpus: 0.8
+    pids_limit: 100
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
+
+networks:
+  searxng-ipv6:
+    name: searxng-${LOGNAME}-ipv6
+    driver: bridge
+    enable_ipv6: true
+    enable_ipv4: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv6: "routed"
+      com.docker.network.bridge.name: "${APP_NAME}-dmz0"
+      com.docker.network.container_iface_prefix: "dmz"
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+      com.docker.network.bridge.enable_ip6_masquerade: "false"
+      com.docker.network.bridge.inhibit_ipv4: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      driver: default
+      config:
+        - subnet: "${IPV6_SUBNET}"
+          gateway: "${IPV6_GATEWAY}"
+
+volumes:
+  searxng-data:
+    name: "searxng-data-${LOGNAME}"
