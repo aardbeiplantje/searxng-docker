@@ -11,6 +11,7 @@ services:
       - /var/tmp:rw,noexec,nosuid,nodev,size=8M,mode=1700
       - /etc/ssl/certs:rw,exec,nosuid,nodev,size=8M,mode=1700
       - /run:rw,noexec,nosuid,nodev,size=4k,mode=1700
+      - /var/cache/searxng:rw,noexec,nosuid,nodev,size=128m,mode=1700
     environment:
       SEARXNG_BASE_URL: "${SEARXNG_BASE_URL}"
       SEARXNG_SECRET: "${SEARXNG_SECRET_KEY}"
@@ -19,7 +20,6 @@ services:
       PYTHONPYCACHEPREFIX: "/tmp/pycache"
     volumes:
       - ./config:/etc/searxng:ro
-      - searxng-data:/var/cache/searxng/
     networks:
       searxng-ipv6:
         ipv6_address: "${IPV6_ADDRESS}"
@@ -62,7 +62,3 @@ networks:
       config:
         - subnet: "${IPV6_SUBNET}"
           gateway: "${IPV6_GATEWAY}"
-
-volumes:
-  searxng-data:
-    name: "searxng-data-${LOGNAME}"
